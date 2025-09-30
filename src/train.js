@@ -23,11 +23,13 @@ function epsilonForStep(step) {
 }
 
 export class Trainer {
-  constructor(statusUpdater = () => {}) {
+  constructor(statusUpdater = () => {}, renderer = null) {
     this.statusUpdater = statusUpdater;
+    this.renderer = renderer;
     this.shouldRun = false;
     this.step = 0;
     this.queued = [];
+    this.shouldRenderEpisodes = false;
   }
 
   async initAgents() {
@@ -44,7 +46,11 @@ export class Trainer {
     const stats = { episodes: 0, steps: 0 };
     for (let i = 0; i < TRAIN_EPISODES_PER_LOOP; i += 1) {
       const pairing = pickPlayers();
-      const result = await runEpisode({ ...pairing, epsilon });
+      const episodeOpts =
+        this.shouldRenderEpisodes && this.renderer
+          ? { render: true, renderer: this.renderer }
+          : undefined;
+      const result = await runEpisode({ ...pairing, epsilon }, episodeOpts);
       stats.episodes += 1;
       stats.steps += result.steps;
       for (const [who, transitions] of Object.entries(result.transitions)) {
@@ -88,5 +94,9 @@ export class Trainer {
         console.error("Upload failed", err);
       }
     }
+  }
+
+  setSpectate(shouldRender) {
+    this.shouldRenderEpisodes = shouldRender;
   }
 }

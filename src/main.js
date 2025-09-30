@@ -6,6 +6,7 @@ const canvas = document.getElementById("pitch");
 const ctx = canvas.getContext("2d");
 const toggleBtn = document.getElementById("train-toggle");
 const watchBtn = document.getElementById("watch-once");
+const watchTrainingBtn = document.getElementById("watch-training");
 const epsEl = document.getElementById("eps");
 const avgStepsEl = document.getElementById("avg-steps");
 const queuedEl = document.getElementById("queued-updates");
@@ -14,8 +15,9 @@ const versionEls = {
   fred: document.getElementById("fred-version")
 };
 
-const trainer = new Trainer(updateStatus);
+const trainer = new Trainer(updateStatus, drawScene);
 let renderHandle = null;
+let watchingTraining = false;
 
 (async () => {
   await trainer.initAgents();
@@ -29,6 +31,15 @@ toggleBtn.addEventListener("click", async () => {
   if (trainer.shouldRun) {
     trainer.loop();
   }
+});
+
+watchTrainingBtn.addEventListener("click", () => {
+  watchingTraining = !watchingTraining;
+  trainer.setSpectate(watchingTraining);
+  watchTrainingBtn.textContent = watchingTraining
+    ? "Stop Watching Training"
+    : "Watch Training";
+  watchTrainingBtn.classList.toggle("active", watchingTraining);
 });
 
 watchBtn.addEventListener("click", async () => {

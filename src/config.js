@@ -3,7 +3,7 @@ export const FIELD_HEIGHT = 36;
 export const CANVAS_WIDTH = 800;
 export const CANVAS_HEIGHT = 480;
 export const TICK_RATE = 60;
-export const MAX_STEPS = TICK_RATE * 60; // 60 seconds
+export const MAX_STEPS = TICK_RATE * 30; // 30 seconds
 export const BALL_RADIUS = 1.2;
 export const PLAYER_RADIUS = 1.5;
 export const CONE_RADIUS = 0.8;
@@ -35,6 +35,7 @@ export const ATTRIBUTES = [
 export const INITIAL_ATTRIBUTE_SCORE = 5; // out of 10
 export const REWARD_WIN = 500;
 export const REWARD_LOSS = -500;
+export const REWARD_DRAW = -50;
 export const OBSERVATION_SIZE =
   5 * 2 + // players pos/vel/facing
   4 + // ball pos/vel

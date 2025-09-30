@@ -89,6 +89,12 @@ body {
   transform: translateY(-1px);
 }
 
+.controls button.active {
+  background: rgba(255, 112, 67, 0.35);
+  border-color: rgba(255, 112, 67, 0.8);
+  box-shadow: 0 0 0 2px rgba(255, 112, 67, 0.15);
+}
+
 .status {
   display: flex;
   flex-direction: column;
