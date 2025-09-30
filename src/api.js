@@ -41,3 +41,8 @@ export async function uploadDelta(payload, retries = 2) {
   }
   throw new Error("Failed to upload delta");
 }
+
+export async function fetchTrainingStats() {
+  const res = await fetch(`${BASE_URL}/stats`);
+  return handleResponse(res);
+}

@@ -23,9 +23,16 @@ function epsilonForStep(step) {
 }
 
 export class Trainer {
-  constructor(statusUpdater = () => {}, renderer = null) {
+  constructor(
+    statusUpdater = () => {},
+    renderer = null,
+    trainingObserver = () => {},
+    statsUpdater = () => {}
+  ) {
     this.statusUpdater = statusUpdater;
     this.renderer = renderer;
+    this.trainingObserver = trainingObserver;
+    this.globalStatsUpdater = statsUpdater;
     this.shouldRun = false;
     this.step = 0;
     this.queued = [];
@@ -81,6 +88,7 @@ export class Trainer {
       const delta = agent.exportLastLayerDelta(before);
       const version = getAgentVersion(who);
       this.queued.push({ who, baseVersion: version, delta, count: batch.length });
+      this.trainingObserver({ who, count: batch.length });
     }
   }
 
@@ -89,7 +97,10 @@ export class Trainer {
     this.queued = [];
     for (const item of pending) {
       try {
-        await uploadDelta(item);
+        const result = await uploadDelta(item);
+        if (result && result.stats) {
+          this.globalStatsUpdater(result.stats);
+        }
       } catch (err) {
         console.error("Upload failed", err);
       }

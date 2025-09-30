@@ -1,6 +1,8 @@
 import { getStore } from "@netlify/blobs";
 
 const store = getStore({ name: "rl-data" });
+const STATS_KEY = "stats/training.json";
+const AGENTS = ["gregory", "fred"];
 
 export default async function handler(req) {
   if (req.method !== "POST") {
@@ -32,11 +34,12 @@ export default async function handler(req) {
   await store.set(key, JSON.stringify({ baseVersion, count, delta }), {
     contentType: "application/json"
   });
-  return jsonResponse({ ok: true });
+  const stats = await incrementTrainingStats(who);
+  return jsonResponse({ ok: true, stats });
 }
 
 function isValidWho(who) {
-  return who === "gregory" || who === "fred";
+  return AGENTS.includes(who);
 }
 
 function validateDelta(delta, spec) {
@@ -55,4 +58,53 @@ function jsonResponse(body, status = 200) {
     status,
     headers: { "content-type": "application/json" }
   });
+}
+
+async function incrementTrainingStats(who) {
+  const stats = await readStats();
+  stats.total += 1;
+  if (!stats.perAgent[who]) {
+    stats.perAgent[who] = 0;
+  }
+  stats.perAgent[who] += 1;
+  await store.set(STATS_KEY, JSON.stringify(stats), {
+    contentType: "application/json"
+  });
+  return stats;
+}
+
+async function readStats() {
+  try {
+    const text = await store.get(STATS_KEY);
+    if (!text) return createEmptyStats();
+    const parsed = JSON.parse(text);
+    return normalizeStats(parsed);
+  } catch (err) {
+    console.error("Failed to read training stats", err);
+    return createEmptyStats();
+  }
+}
+
+function normalizeStats(stats) {
+  const result = createEmptyStats();
+  if (stats && Number.isFinite(stats.total)) {
+    result.total = stats.total;
+  }
+  if (stats && typeof stats.perAgent === "object") {
+    for (const who of AGENTS) {
+      const value = Number(stats.perAgent[who]);
+      if (Number.isFinite(value)) {
+        result.perAgent[who] = value;
+      }
+    }
+  }
+  return result;
+}
+
+function createEmptyStats() {
+  const perAgent = {};
+  for (const who of AGENTS) {
+    perAgent[who] = 0;
+  }
+  return { total: 0, perAgent };
 }
