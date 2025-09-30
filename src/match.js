@@ -1,6 +1,6 @@
 import { FootballEnv } from "./env.js";
 import { ensureAgent } from "./agent.js";
-import { REWARD_WIN, REWARD_LOSS, ACTIONS } from "./config.js";
+import { REWARD_WIN, REWARD_LOSS, REWARD_DRAW, ACTIONS } from "./config.js";
 
 export async function runEpisode({ p1Who, p2Who, epsilon }, opts = {}) {
   const { render = false, renderer = null } = opts;
@@ -22,6 +22,7 @@ export async function runEpisode({ p1Who, p2Who, epsilon }, opts = {}) {
     done = result.done;
     if (render && renderer) {
       renderer(env);
+      await waitForNextFrame();
     }
     if (done) {
       let rewards = {};
@@ -30,8 +31,7 @@ export async function runEpisode({ p1Who, p2Who, epsilon }, opts = {}) {
       } else if (result.winner === 2) {
         rewards = { [p1Who]: REWARD_LOSS, [p2Who]: REWARD_WIN };
       } else {
-        // draw => discard
-        break;
+        rewards = { [p1Who]: REWARD_DRAW, [p2Who]: REWARD_DRAW };
       }
       transitions[p1Who].push({
         state: prevObs,
@@ -65,4 +65,11 @@ export async function runEpisode({ p1Who, p2Who, epsilon }, opts = {}) {
     }
   }
   return { transitions, steps: env.stepCount };
+}
+
+function waitForNextFrame() {
+  if (typeof requestAnimationFrame === "function") {
+    return new Promise((resolve) => requestAnimationFrame(resolve));
+  }
+  return new Promise((resolve) => setTimeout(resolve, 16));
 }
