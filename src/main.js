@@ -7,6 +7,8 @@ const ctx = canvas.getContext("2d");
 const toggleBtn = document.getElementById("train-toggle");
 const watchBtn = document.getElementById("watch-once");
 const watchTrainingBtn = document.getElementById("watch-training");
+const trainingIndicator = document.getElementById("training-indicator");
+const trainingIndicatorText = document.getElementById("training-indicator-text");
 const epsEl = document.getElementById("eps");
 const avgStepsEl = document.getElementById("avg-steps");
 const queuedEl = document.getElementById("queued-updates");
@@ -23,23 +25,30 @@ let watchingTraining = false;
   await trainer.initAgents();
   await refreshVersions();
   setInterval(() => trainer.flush(), 15000);
+  updateTrainingUI();
 })();
 
 toggleBtn.addEventListener("click", async () => {
   trainer.shouldRun = !trainer.shouldRun;
-  toggleBtn.textContent = trainer.shouldRun ? "Stop Training" : "Start Training";
   if (trainer.shouldRun) {
     trainer.loop();
+  } else if (watchingTraining) {
+    watchingTraining = false;
+    trainer.setSpectate(false);
+    updateWatchTrainingBtn();
   }
+  updateTrainingUI();
 });
 
 watchTrainingBtn.addEventListener("click", () => {
   watchingTraining = !watchingTraining;
   trainer.setSpectate(watchingTraining);
-  watchTrainingBtn.textContent = watchingTraining
-    ? "Stop Watching Training"
-    : "Watch Training";
-  watchTrainingBtn.classList.toggle("active", watchingTraining);
+  updateWatchTrainingBtn();
+  if (watchingTraining && !trainer.shouldRun) {
+    trainer.shouldRun = true;
+    trainer.loop();
+    updateTrainingUI();
+  }
 });
 
 watchBtn.addEventListener("click", async () => {
@@ -69,6 +78,22 @@ function updateStatus({ eps, avgSteps, queued }) {
   epsEl.textContent = eps.toFixed(2);
   avgStepsEl.textContent = avgSteps.toFixed(0);
   queuedEl.textContent = queued;
+}
+
+function updateTrainingUI() {
+  toggleBtn.textContent = trainer.shouldRun ? "Stop Training" : "Start Training";
+  toggleBtn.classList.toggle("active", trainer.shouldRun);
+  trainingIndicator.dataset.state = trainer.shouldRun ? "active" : "idle";
+  trainingIndicatorText.textContent = trainer.shouldRun
+    ? "Training active"
+    : "Training paused";
+}
+
+function updateWatchTrainingBtn() {
+  watchTrainingBtn.textContent = watchingTraining
+    ? "Stop Watching Training"
+    : "Watch Training";
+  watchTrainingBtn.classList.toggle("active", watchingTraining);
 }
 
 function drawScene(env) {
