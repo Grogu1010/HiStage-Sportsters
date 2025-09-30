@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HiStage Sportsters</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <h1>HiStage Sportsters</h1>
+        <p class="tagline">A HiStage experiment in collaborative football intelligence.</p>
+      </div>
+      <nav class="header-links">
+        <a href="https://histage.netlify.app" target="_blank" rel="noopener" class="histage-link">Visit HiStage</a>
+      </nav>
+    </header>
+
+    <main class="app-main">
+      <section class="controls">
+        <button id="train-toggle">Start Training</button>
+        <button id="watch-once">Watch Exhibition Match</button>
+      </section>
+
+      <section class="status">
+        <div class="status-card">
+          <h2>Agent Versions</h2>
+          <div class="agent-versions">
+            <div class="agent">
+              <span class="label">Gregory</span>
+              <span id="gregory-version" class="value">0</span>
+            </div>
+            <div class="agent">
+              <span class="label">Fred</span>
+              <span id="fred-version" class="value">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="status-card">
+          <h2>Session Stats</h2>
+          <dl class="stats-list">
+            <div>
+              <dt>Episodes / sec</dt>
+              <dd id="eps">0</dd>
+            </div>
+            <div>
+              <dt>Average Steps</dt>
+              <dd id="avg-steps">0</dd>
+            </div>
+            <div>
+              <dt>Queued Updates</dt>
+              <dd id="queued-updates">0</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="canvas-panel">
+        <canvas id="pitch" width="800" height="480" aria-label="Football training ground"></canvas>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>
+        HiStage Sportsters is a community research track under the
+        <a href="https://histage.netlify.app" target="_blank" rel="noopener">HiStage initiative</a>.
+        Gregory and Fred learn together through your browser.
+      </p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4"></script>
+    <script type="module" src="/../src/main.js"></script>
+  </body>
+</html>
