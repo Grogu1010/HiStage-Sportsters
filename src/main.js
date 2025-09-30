@@ -7,11 +7,14 @@ const ctx = canvas.getContext("2d");
 const toggleBtn = document.getElementById("train-toggle");
 const watchBtn = document.getElementById("watch-once");
 const watchTrainingBtn = document.getElementById("watch-training");
+const viewStatsBtn = document.getElementById("view-stats");
 const trainingIndicator = document.getElementById("training-indicator");
 const trainingIndicatorText = document.getElementById("training-indicator-text");
 const epsEl = document.getElementById("eps");
 const avgStepsEl = document.getElementById("avg-steps");
 const queuedEl = document.getElementById("queued-updates");
+const statsSection = document.getElementById("stats-section");
+const sessionStatsCard = document.getElementById("session-stats");
 const versionEls = {
   gregory: document.getElementById("gregory-version"),
   fred: document.getElementById("fred-version")
@@ -58,6 +61,18 @@ watchBtn.addEventListener("click", async () => {
   const pairing = pickPlayers();
   const epsilon = 0.01;
   await runEpisode({ ...pairing, epsilon }, { render: true, renderer: drawScene });
+});
+
+viewStatsBtn?.addEventListener("click", () => {
+  statsSection?.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (!sessionStatsCard) return;
+  sessionStatsCard.classList.remove("highlight");
+  // Force reflow so the animation can replay if the user clicks repeatedly.
+  void sessionStatsCard.offsetWidth;
+  sessionStatsCard.classList.add("highlight");
+  setTimeout(() => {
+    sessionStatsCard.classList.remove("highlight");
+  }, 2000);
 });
 
 async function refreshVersions() {
