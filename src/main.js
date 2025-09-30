@@ -7,6 +7,8 @@ const ctx = canvas.getContext("2d");
 const toggleBtn = document.getElementById("train-toggle");
 const watchBtn = document.getElementById("watch-once");
 const watchTrainingBtn = document.getElementById("watch-training");
+const trainingIndicator = document.getElementById("training-indicator");
+const trainingIndicatorText = document.getElementById("training-indicator-text");
 const epsEl = document.getElementById("eps");
 const avgStepsEl = document.getElementById("avg-steps");
 const queuedEl = document.getElementById("queued-updates");
@@ -54,19 +56,25 @@ let watchingTraining = false;
 
 toggleBtn.addEventListener("click", async () => {
   trainer.shouldRun = !trainer.shouldRun;
-  toggleBtn.textContent = trainer.shouldRun ? "Stop Training" : "Start Training";
   if (trainer.shouldRun) {
     trainer.loop();
+  } else if (watchingTraining) {
+    watchingTraining = false;
+    trainer.setSpectate(false);
+    updateWatchTrainingBtn();
   }
+  updateTrainingUI();
 });
 
 watchTrainingBtn.addEventListener("click", () => {
   watchingTraining = !watchingTraining;
   trainer.setSpectate(watchingTraining);
-  watchTrainingBtn.textContent = watchingTraining
-    ? "Stop Watching Training"
-    : "Watch Training";
-  watchTrainingBtn.classList.toggle("active", watchingTraining);
+  updateWatchTrainingBtn();
+  if (watchingTraining && !trainer.shouldRun) {
+    trainer.shouldRun = true;
+    trainer.loop();
+    updateTrainingUI();
+  }
 });
 
 watchBtn.addEventListener("click", async () => {

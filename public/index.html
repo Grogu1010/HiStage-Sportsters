@@ -22,6 +22,16 @@
         <button id="train-toggle">Start Training</button>
         <button id="watch-once">Watch Exhibition Match</button>
         <button id="watch-training">Watch Training</button>
+        <div
+          id="training-indicator"
+          class="training-indicator"
+          data-state="idle"
+          role="status"
+          aria-live="polite"
+        >
+          <span class="training-indicator__dot" aria-hidden="true"></span>
+          <span id="training-indicator-text">Training paused</span>
+        </div>
       </section>
 
       <section class="status">
