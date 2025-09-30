@@ -7,6 +7,7 @@ class AgentModel {
     this.who = who;
     this.online = buildNetwork();
     this.target = buildNetwork();
+    this.optimizer = tf.train.adam(config.LEARNING_RATE);
     this.version = -1;
     this.steps = 0;
     this.replay = [];
@@ -17,6 +18,10 @@ class AgentModel {
     this.version = version;
     assignWeights(this.online, weights);
     assignWeights(this.target, weights);
+    if (this.optimizer) {
+      this.optimizer.dispose();
+    }
+    this.optimizer = tf.train.adam(config.LEARNING_RATE);
   }
 
   predict(obs, useTarget = false) {
@@ -56,26 +61,24 @@ class AgentModel {
   }
 
   async trainStep(batch) {
-    const optimizer = tf.train.adam(0.0005);
-    const lossFn = () => {
+    const loss = this.optimizer.minimize(() => {
       const states = tf.tensor2d(batch.map((b) => b.state));
       const nextStates = tf.tensor2d(batch.map((b) => b.nextState));
       const actions = tf.tensor1d(batch.map((b) => b.action), "int32");
       const rewards = tf.tensor1d(batch.map((b) => b.reward));
       const terminals = tf.tensor1d(batch.map((b) => (b.done ? 0 : 1)));
-      const qValues = this.online.apply(states);
       const actionMask = tf.oneHot(actions, config.ACTIONS.length);
+      const qValues = this.online.apply(states);
       const pred = qValues.mul(actionMask).sum(-1);
-      const nextQ = this.target.predict(nextStates).max(-1);
-      const targets = rewards.add(nextQ.mul(terminals).mul(config.GAMMA));
-      const loss = tf.losses.meanSquaredError(targets, pred);
-      return loss;
-    };
-    const grads = tf.variableGrads(lossFn);
-    optimizer.applyGradients(grads.grads);
-    disposeDict(grads.grads);
-    grads.value.dispose();
-    optimizer.dispose();
+      const nextOnline = this.online.apply(nextStates);
+      const nextActions = nextOnline.argMax(-1);
+      const nextActionMask = tf.oneHot(nextActions, config.ACTIONS.length);
+      const nextTarget = this.target.apply(nextStates);
+      const nextMaxQ = nextTarget.mul(nextActionMask).sum(-1);
+      const targets = rewards.add(nextMaxQ.mul(terminals).mul(config.GAMMA));
+      return tf.losses.huberLoss(targets, pred);
+    }, true);
+    if (loss) loss.dispose();
   }
 
   maybeSyncTarget() {
@@ -133,10 +136,6 @@ function assignWeights(model, weightsObj) {
   });
   model.setWeights(weights);
   weights.forEach((w) => w.dispose());
-}
-
-function disposeDict(dict) {
-  Object.values(dict).forEach((v) => v.dispose());
 }
 
 export function ensureAgent(who) {
