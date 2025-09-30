@@ -2,8 +2,13 @@
   "name": "ai-football",
   "private": true,
   "type": "module",
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --splitting --format=esm --outdir=public/assets --sourcemap"
+  },
   "dependencies": {
     "@netlify/blobs": "^5.0.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "esbuild": "^0.21.5"
+  }
 }
