@@ -1,5 +1,5 @@
 import { Trainer } from "./train.js";
-import { fetchModel } from "./api.js";
+import { fetchModel, fetchTrainingStats } from "./api.js";
 import { ensureAgent, setAgentVersion } from "./agent.js";
 
 const canvas = document.getElementById("pitch");
@@ -15,14 +15,41 @@ const versionEls = {
   fred: document.getElementById("fred-version")
 };
 
-const trainer = new Trainer(updateStatus, drawScene);
+const sessionTotalEl = document.getElementById("session-total");
+const lifetimeTotalEl = document.getElementById("lifetime-total");
+const globalTotalEl = document.getElementById("global-total");
+const sessionAgentEls = {
+  gregory: document.getElementById("session-gregory"),
+  fred: document.getElementById("session-fred")
+};
+const lifetimeAgentEls = {
+  gregory: document.getElementById("lifetime-gregory"),
+  fred: document.getElementById("lifetime-fred")
+};
+const globalAgentEls = {
+  gregory: document.getElementById("global-gregory"),
+  fred: document.getElementById("global-fred")
+};
+
+const TRAINING_AGENTS = ["gregory", "fred"];
+
+const TRAINING_STORAGE_KEY = "histage-training-counts";
+const sessionCounts = createEmptyCounts();
+const lifetimeCounts = loadLifetimeCounts();
+let globalCounts = createEmptyCounts();
+
+updateTrainingDisplay();
+
+const trainer = new Trainer(updateStatus, drawScene, handleLocalTraining, applyGlobalTrainingStats);
 let renderHandle = null;
 let watchingTraining = false;
 
 (async () => {
   await trainer.initAgents();
   await refreshVersions();
+  await refreshGlobalTrainingStats();
   setInterval(() => trainer.flush(), 15000);
+  setInterval(refreshGlobalTrainingStats, 45000);
 })();
 
 toggleBtn.addEventListener("click", async () => {
@@ -52,7 +79,7 @@ watchBtn.addEventListener("click", async () => {
 });
 
 async function refreshVersions() {
-  for (const who of ["gregory", "fred"]) {
+  for (const who of TRAINING_AGENTS) {
     try {
       const model = await fetchModel(who);
       ensureAgent(who).setWeightsFromServer(model);
@@ -69,6 +96,105 @@ function updateStatus({ eps, avgSteps, queued }) {
   epsEl.textContent = eps.toFixed(2);
   avgStepsEl.textContent = avgSteps.toFixed(0);
   queuedEl.textContent = queued;
+}
+
+async function refreshGlobalTrainingStats() {
+  try {
+    const stats = await fetchTrainingStats();
+    applyGlobalTrainingStats(stats);
+  } catch (err) {
+    console.error("Failed to load training stats", err);
+  }
+}
+
+function handleLocalTraining({ who }) {
+  if (!who) return;
+  if (!(who in sessionCounts.perAgent)) {
+    sessionCounts.perAgent[who] = 0;
+  }
+  if (!(who in lifetimeCounts.perAgent)) {
+    lifetimeCounts.perAgent[who] = 0;
+  }
+  sessionCounts.total += 1;
+  sessionCounts.perAgent[who] += 1;
+  lifetimeCounts.total += 1;
+  lifetimeCounts.perAgent[who] += 1;
+  persistLifetimeCounts();
+  updateTrainingDisplay();
+}
+
+function applyGlobalTrainingStats(stats) {
+  if (!stats) return;
+  globalCounts = normalizeCounts(stats);
+  updateTrainingDisplay();
+}
+
+function updateTrainingDisplay() {
+  const requiredEls = [
+    sessionTotalEl,
+    lifetimeTotalEl,
+    globalTotalEl,
+    ...Object.values(sessionAgentEls),
+    ...Object.values(lifetimeAgentEls),
+    ...Object.values(globalAgentEls)
+  ];
+  if (requiredEls.some((el) => !el)) {
+    return;
+  }
+  sessionTotalEl.textContent = sessionCounts.total;
+  lifetimeTotalEl.textContent = lifetimeCounts.total;
+  globalTotalEl.textContent = globalCounts.total;
+  for (const who of TRAINING_AGENTS) {
+    sessionAgentEls[who].textContent = sessionCounts.perAgent[who];
+    lifetimeAgentEls[who].textContent = lifetimeCounts.perAgent[who];
+    globalAgentEls[who].textContent = globalCounts.perAgent[who];
+  }
+}
+
+function createEmptyCounts() {
+  return {
+    total: 0,
+    perAgent: {
+      gregory: 0,
+      fred: 0
+    }
+  };
+}
+
+function normalizeCounts(data) {
+  const counts = createEmptyCounts();
+  if (data && Number.isFinite(data.total)) {
+    counts.total = data.total;
+  }
+  if (data && typeof data.perAgent === "object") {
+    for (const who of TRAINING_AGENTS) {
+      const value = Number(data.perAgent[who]);
+      if (Number.isFinite(value)) {
+        counts.perAgent[who] = value;
+      }
+    }
+  }
+  return counts;
+}
+
+function loadLifetimeCounts() {
+  try {
+    const raw = localStorage.getItem(TRAINING_STORAGE_KEY);
+    if (!raw) return createEmptyCounts();
+    const parsed = JSON.parse(raw);
+    return normalizeCounts(parsed);
+  } catch (err) {
+    console.warn("Failed to read saved training counts", err);
+    return createEmptyCounts();
+  }
+}
+
+function persistLifetimeCounts() {
+  try {
+    localStorage.setItem(TRAINING_STORAGE_KEY, JSON.stringify(lifetimeCounts));
+  } catch (err) {
+    console.warn("Failed to persist training counts", err);
+  }
 }
 
 function drawScene(env) {
