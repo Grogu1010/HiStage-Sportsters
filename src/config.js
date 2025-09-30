@@ -46,6 +46,7 @@ export const EPSILON_START = 0.2;
 export const EPSILON_END = 0.05;
 export const EPSILON_DECAY_STEPS = 10000;
 export const GAMMA = 0.99;
+export const LEARNING_RATE = 0.00025;
 export const TARGET_SYNC_INTERVAL = 2000;
 export const LOCAL_BATCH_SIZE = 32;
 export const LOCAL_UPDATE_STEPS = 2;
