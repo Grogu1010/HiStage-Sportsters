@@ -66,6 +66,47 @@
             </div>
           </dl>
         </div>
+        <div class="status-card training-card">
+          <h2>Training Counts</h2>
+          <div class="training-totals" role="group" aria-label="Training totals">
+            <div class="training-total">
+              <span class="label">Session</span>
+              <span id="session-total" class="value">0</span>
+            </div>
+            <div class="training-total">
+              <span class="label">My Lifetime</span>
+              <span id="lifetime-total" class="value">0</span>
+            </div>
+            <div class="training-total">
+              <span class="label">Global Lifetime</span>
+              <span id="global-total" class="value">0</span>
+            </div>
+          </div>
+          <table class="training-table" aria-label="Training counts by agent">
+            <thead>
+              <tr>
+                <th scope="col">Agent</th>
+                <th scope="col">Session</th>
+                <th scope="col">My Lifetime</th>
+                <th scope="col">Global Lifetime</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Gregory</th>
+                <td id="session-gregory">0</td>
+                <td id="lifetime-gregory">0</td>
+                <td id="global-gregory">0</td>
+              </tr>
+              <tr>
+                <th scope="row">Fred</th>
+                <td id="session-fred">0</td>
+                <td id="lifetime-fred">0</td>
+                <td id="global-fred">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section class="canvas-panel">
